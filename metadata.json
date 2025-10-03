@@ -1,0 +1,5 @@
+{
+  "name": "Big2Fit",
+  "description": "Big2Fit is a responsive web application that allows daily control of meals, food, exercises, and water intake, with automatic calculation of macronutrients and calories.",
+  "requestFramePermissions": []
+}
