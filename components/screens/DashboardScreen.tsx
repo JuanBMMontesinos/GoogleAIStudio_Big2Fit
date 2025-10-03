@@ -1,4 +1,3 @@
-
 import React, { useContext, useMemo, useState } from 'react';
 import { UserContext } from '../../context/UserContext';
 import { calculateTargetCalories, calculateTargetMacros } from '../../services/calorieService';
@@ -10,10 +9,12 @@ import WaterTracker from '../dashboard/WaterTracker';
 import MealList from '../dashboard/MealList';
 import AddFoodModal from '../dashboard/AddFoodModal';
 import { MEAL_TYPES } from '../../constants';
+import DateNavigator from '../dashboard/DateNavigator';
 
 
 const DashboardScreen: React.FC = () => {
-    const { userProfile, dailyLog } = useContext(UserContext);
+    const { currentUser, dailyLog } = useContext(UserContext);
+    const userProfile = currentUser?.profile; // Get profile from current user
     const [isModalOpen, setModalOpen] = useState(false);
     const [selectedMeal, setSelectedMeal] = useState<MealType | null>(null);
 
@@ -65,7 +66,7 @@ const DashboardScreen: React.FC = () => {
     
     return (
         <div className="container mx-auto">
-            <h1 className="text-3xl font-bold text-white mb-6">Resumo de Hoje, {userProfile.name}</h1>
+            <DateNavigator />
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <CalorieSummary

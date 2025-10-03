@@ -1,4 +1,3 @@
-
 export enum Gender {
   MALE = 'male',
   FEMALE = 'female',
@@ -28,6 +27,13 @@ export interface UserProfile {
   age: number;
   activityLevel: ActivityLevel;
   goal: Goal;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  password: string; // In a real app, this would be a hash
+  profile: UserProfile;
 }
 
 export interface Food {
