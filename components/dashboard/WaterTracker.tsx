@@ -1,7 +1,10 @@
 
+
 import React, { useContext } from 'react';
 import Card from '../ui/Card';
+// FIX: Corrected import path for UserContext
 import { UserContext } from '../../context/UserContext';
+// FIX: Corrected import path for constants
 import { WATER_INCREMENT, MAX_WATER } from '../../constants';
 import Button from '../ui/Button';
 

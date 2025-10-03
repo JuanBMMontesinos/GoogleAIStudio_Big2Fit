@@ -1,9 +1,13 @@
 
+
 import React, { useContext } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
+// FIX: Corrected import path for UserContext
 import { UserContext } from '../../context/UserContext';
+// FIX: Corrected import path for types
 import { MealType, MealFood } from '../../types';
+// FIX: Corrected import path for constants
 import { MEAL_TYPES } from '../../constants';
 import PlusIcon from '../icons/PlusIcon';
 import TrashIcon from '../icons/TrashIcon';

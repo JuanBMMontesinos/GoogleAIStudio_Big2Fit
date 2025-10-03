@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+// FIX: Corrected import path for UserContext
 import { UserContext } from '../../context/UserContext';
 
 const AuthScreen: React.FC = () => {

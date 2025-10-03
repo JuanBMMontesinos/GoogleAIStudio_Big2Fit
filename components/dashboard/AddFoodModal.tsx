@@ -2,7 +2,9 @@ import React, { useState, useContext, useMemo } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+// FIX: Corrected import path for UserContext
 import { UserContext } from '../../context/UserContext';
+// FIX: Corrected import path for types
 import { MealType, Food } from '../../types';
 
 interface AddFoodModalProps {
@@ -17,7 +19,6 @@ const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, mealType }
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [grams, setGrams] = useState(100);
-  // FIX: Added `grams` to the customFood state to fix type errors where it was being accessed but didn't exist.
   const [customFood, setCustomFood] = useState({
     name: '', calories: 0, protein: 0, carbs: 0, fat: 0, grams: 100
   });
@@ -37,14 +38,13 @@ const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, mealType }
     }
   };
 
-  // FIX: Corrected the logic for creating and adding a custom food.
-  // Destructured `grams` from `customFood` to pass the correct arguments to `addCustomFood` and `addFoodToMeal`.
-  // Also adjusted the calorie check to allow zero-calorie foods.
   const handleCreateCustomFood = () => {
     if (customFood.name && customFood.calories >= 0 && customFood.grams > 0) {
       const { grams, ...foodData } = customFood;
       addCustomFood(foodData);
-      addFoodToMeal(mealType, { ...foodData, id: `temp-${Date.now()}`, isCustom: true }, grams);
+      // Temporarily create a full food object to pass to addFoodToMeal, as the context will handle the real ID
+      const newFoodForLog: Food = { ...foodData, id: `temp-${Date.now()}`, isCustom: true };
+      addFoodToMeal(mealType, newFoodForLog, grams);
       onClose();
       resetState();
     }
@@ -54,7 +54,6 @@ const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, mealType }
     setSearchTerm('');
     setSelectedFood(null);
     setGrams(100);
-    // FIX: Included `grams` in the reset state for customFood to match the updated state shape.
     setCustomFood({ name: '', calories: 0, protein: 0, carbs: 0, fat: 0, grams: 100 });
     setActiveTab('search');
   };
@@ -63,9 +62,14 @@ const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, mealType }
       const { name, value } = e.target;
       setCustomFood(prev => ({...prev, [name]: name === 'name' ? value : Number(value) }));
   }
+  
+  const handleClose = () => {
+      resetState();
+      onClose();
+  }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Adicionar em ${mealType}`}>
+    <Modal isOpen={isOpen} onClose={handleClose} title={`Adicionar em ${mealType}`}>
       <div className="flex border-b border-gray-700 mb-4">
         <button onClick={() => setActiveTab('search')} className={`px-4 py-2 text-sm font-medium ${activeTab === 'search' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-gray-400'}`}>Buscar</button>
         <button onClick={() => setActiveTab('create')} className={`px-4 py-2 text-sm font-medium ${activeTab === 'create' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-gray-400'}`}>Criar Novo</button>

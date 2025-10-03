@@ -1,234 +1,233 @@
+
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { User, UserProfile, DailyLog, Food, MealType, MealFood, Gender, ActivityLevel, Goal } from '../types';
-import { PREDEFINED_FOODS, MEAL_TYPES } from '../constants';
-import { v4 as uuidv4 } from 'uuid';
+import { User, UserProfile, Food, MealType, MealFood, DailyLog, Exercise, LoggedExercise, Gender, ActivityLevel, Goal } from '../types';
+import { FOOD_LIST } from '../constants';
 
-// In a real app, this would be handled by a backend.
-// We are simulating a user database in localStorage.
-const USERS_STORAGE_KEY = 'big2fit_users';
-const LOGGED_IN_USER_ID_KEY = 'big2fit_loggedInUserId';
-
-interface UserContextType {
-  currentUser: User | null;
-  isAuthenticated: boolean;
-  dailyLog: DailyLog | null;
-  foodList: Food[];
-  selectedDate: string;
-  login: (email: string, password: string) => boolean;
-  signup: (name: string, email: string, password: string) => boolean;
-  logout: () => void;
-  saveUserProfile: (profile: UserProfile) => void;
-  updatePassword: (currentPassword: string, newPassword: string) => boolean;
-  addFoodToMeal: (mealType: MealType, food: Food, grams: number) => void;
-  removeFoodFromMeal: (mealType: MealType, foodId: string, grams: number) => void;
-  addCustomFood: (food: Omit<Food, 'id' | 'isCustom'>) => void;
-  updateWaterIntake: (amount: number) => void;
-  isProfileComplete: () => boolean;
-  changeDate: (direction: 'next' | 'prev' | 'today') => void;
-}
-
-export const UserContext = createContext<UserContextType>({} as UserContextType);
+// A mock hashing function for demonstration. In a real app, use a library like bcrypt.
+const simpleHash = (s: string) => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+        h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+    }
+    return h.toString();
+};
 
 const getTodayDateString = () => new Date().toISOString().split('T')[0];
 
-const createEmptyLog = (date: string): DailyLog => {
-  const emptyMeals = MEAL_TYPES.reduce((acc, mealType) => {
-    acc[mealType] = { foods: [] };
-    return acc;
-  }, {} as Record<MealType, { foods: MealFood[] }>);
-
-  return { date, meals: emptyMeals, water: 0 };
-};
-
-const createEmptyProfile = (name: string): UserProfile => ({
-  name,
-  height: 0,
-  weight: 0,
-  gender: Gender.MALE,
-  age: 0,
-  activityLevel: ActivityLevel.MODERATE,
-  goal: Goal.MAINTAIN_WEIGHT,
+const createEmptyLog = (date: string): DailyLog => ({
+    date,
+    meals: {
+        'Café da Manhã': { foods: [] },
+        'Almoço': { foods: [] },
+        'Jantar': { foods: [] },
+        'Lanches': { foods: [] },
+    },
+    water: 0,
+    exercises: [],
 });
 
+interface IUserContext {
+    isAuthenticated: boolean;
+    currentUser: User | null;
+    foodList: Food[];
+    dailyLog: DailyLog | null;
+    selectedDate: string;
+    login: (email: string, pass: string) => boolean;
+    signup: (name: string, email: string, pass: string) => boolean;
+    logout: () => void;
+    saveUserProfile: (profile: UserProfile) => void;
+    updatePassword: (currentPass: string, newPass: string) => boolean;
+    isProfileComplete: () => boolean;
+    addFoodToMeal: (mealType: MealType, food: Food, grams: number) => void;
+    removeFoodFromMeal: (mealType: MealType, foodId: string, grams: number) => void;
+    addCustomFood: (food: Omit<Food, 'id' | 'isCustom'>) => void;
+    updateWaterIntake: (amount: number) => void;
+    changeDate: (direction: 'prev' | 'next' | 'today') => void;
+    addExercise: (exercise: Exercise, duration: number) => void;
+    removeExercise: (exerciseId: string, duration: number) => void;
+}
 
-export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
-  const [foodList, setFoodList] = useState<Food[]>(PREDEFINED_FOODS);
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
+export const UserContext = createContext<IUserContext>({} as IUserContext);
 
-  // Effect for initial load of users and session (runs once)
-  useEffect(() => {
-    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-    const allUsers = storedUsers ? JSON.parse(storedUsers) : [];
-    setUsers(allUsers);
+interface UserProviderProps {
+  children: ReactNode;
+}
+
+export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
+    const [users, setUsers] = useState<User[]>(() => {
+        const localData = localStorage.getItem('users');
+        return localData ? JSON.parse(localData) : [];
+    });
+    const [currentUser, setCurrentUser] = useState<User | null>(() => {
+        const localData = localStorage.getItem('currentUser');
+        return localData ? JSON.parse(localData) : null;
+    });
+    const [foodList, setFoodList] = useState<Food[]>(() => {
+         const localData = localStorage.getItem('foodList');
+        return localData ? JSON.parse(localData) : FOOD_LIST;
+    });
+    const [dailyLogs, setDailyLogs] = useState<Record<string, DailyLog>>(() => {
+        const localData = localStorage.getItem('dailyLogs');
+        return localData ? JSON.parse(localData) : {};
+    });
+    const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
+
+    const dailyLog = dailyLogs[selectedDate] || createEmptyLog(selectedDate);
+
+    useEffect(() => {
+        localStorage.setItem('users', JSON.stringify(users));
+    }, [users]);
+
+    useEffect(() => {
+        if (currentUser) {
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        } else {
+            localStorage.removeItem('currentUser');
+        }
+    }, [currentUser]);
     
-    const loggedInUserId = localStorage.getItem(LOGGED_IN_USER_ID_KEY);
-    if (loggedInUserId) {
-      const userToLogin = allUsers.find((u: User) => u.id === loggedInUserId);
-      if (userToLogin) {
-        setCurrentUser(userToLogin);
-      }
-    }
-  }, []);
+    useEffect(() => {
+        localStorage.setItem('foodList', JSON.stringify(foodList));
+    }, [foodList]);
+    
+    useEffect(() => {
+        localStorage.setItem('dailyLogs', JSON.stringify(dailyLogs));
+    }, [dailyLogs]);
 
-  // Effect to load data when currentUser or selectedDate changes
-  useEffect(() => {
-    if (currentUser) {
-      // Load user's custom foods
-      const storedFoods = localStorage.getItem(`customFoods-${currentUser.id}`);
-      const customFoods = storedFoods ? JSON.parse(storedFoods) : [];
-      setFoodList([...PREDEFINED_FOODS, ...customFoods]);
-
-      // Load daily log for selected date
-      const storedLog = localStorage.getItem(`dailyLog-${currentUser.id}-${selectedDate}`);
-      if (storedLog) {
-        setDailyLog(JSON.parse(storedLog));
-      } else {
-        setDailyLog(createEmptyLog(selectedDate));
-      }
-    } else {
-      // Reset data if no user is logged in
-      setDailyLog(null);
-      setFoodList(PREDEFINED_FOODS);
-    }
-  }, [currentUser, selectedDate]);
-  
-  // Effect to save dailyLog whenever it changes
-  useEffect(() => {
-    if (dailyLog && currentUser) {
-      localStorage.setItem(`dailyLog-${currentUser.id}-${dailyLog.date}`, JSON.stringify(dailyLog));
-    }
-  }, [dailyLog, currentUser]);
-  
-  const persistUsers = (updatedUsers: User[]) => {
-      setUsers(updatedUsers);
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-  }
-
-  const signup = (name: string, email: string, password: string): boolean => {
-    const emailExists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
-    if(emailExists) {
-        alert("Email já cadastrado.");
-        return false;
-    }
-    const newUser: User = {
-        id: uuidv4(),
-        email,
-        password, // In a real app, hash this!
-        profile: createEmptyProfile(name),
+    const updateLogs = (log: DailyLog) => {
+        setDailyLogs(prev => ({ ...prev, [log.date]: log }));
     };
-    const updatedUsers = [...users, newUser];
-    persistUsers(updatedUsers);
-    setCurrentUser(newUser);
-    localStorage.setItem(LOGGED_IN_USER_ID_KEY, newUser.id);
-    return true;
-  }
-  
-  const login = (email: string, password: string): boolean => {
-      const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-      if(user && user.password === password) {
-          setCurrentUser(user);
-          localStorage.setItem(LOGGED_IN_USER_ID_KEY, user.id);
-          return true;
-      }
-      return false;
-  }
-  
-  const logout = () => {
-      setCurrentUser(null);
-      localStorage.removeItem(LOGGED_IN_USER_ID_KEY);
-  }
 
-  const saveUserProfile = (profile: UserProfile) => {
-    if (!currentUser) return;
-    const updatedUser = { ...currentUser, profile };
-    setCurrentUser(updatedUser);
+    const login = (email: string, pass: string): boolean => {
+        const user = users.find(u => u.email === email);
+        if (user && user.passwordHash === simpleHash(pass)) {
+            setCurrentUser(user);
+            return true;
+        }
+        return false;
+    };
 
-    const updatedUsers = users.map(u => u.id === currentUser.id ? updatedUser : u);
-    persistUsers(updatedUsers);
-  };
-  
-  const updatePassword = (currentPassword: string, newPassword: string): boolean => {
-    if(!currentUser || currentUser.password !== currentPassword) return false;
+    const signup = (name: string, email: string, pass: string): boolean => {
+        if (users.some(u => u.email === email)) {
+            return false;
+        }
+        const newUser: User = {
+            id: `user-${Date.now()}`,
+            email,
+            passwordHash: simpleHash(pass),
+            profile: { name, age: 0, height: 0, weight: 0, gender: Gender.MALE, activityLevel: ActivityLevel.LOW, goal: Goal.MAINTAIN_WEIGHT },
+        };
+        setUsers(prev => [...prev, newUser]);
+        setCurrentUser(newUser);
+        return true;
+    };
+
+    const logout = () => {
+        setCurrentUser(null);
+    };
+
+    const saveUserProfile = (profile: UserProfile) => {
+        if (!currentUser) return;
+        const updatedUser = { ...currentUser, profile };
+        setCurrentUser(updatedUser);
+        setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
+    };
+
+    const updatePassword = (currentPass: string, newPass: string): boolean => {
+        if (!currentUser || currentUser.passwordHash !== simpleHash(currentPass)) {
+            return false;
+        }
+        const updatedUser = { ...currentUser, passwordHash: simpleHash(newPass) };
+        setCurrentUser(updatedUser);
+        setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
+        return true;
+    };
+
+    const isProfileComplete = (): boolean => {
+        if (!currentUser?.profile) return false;
+        const { age, height, weight, name } = currentUser.profile;
+        return !!(age && height && weight && name);
+    };
+
+    const addFoodToMeal = (mealType: MealType, food: Food, grams: number) => {
+        const newFood: MealFood = { ...food, grams };
+        const updatedLog = { ...dailyLog };
+        updatedLog.meals[mealType].foods.push(newFood);
+        updateLogs(updatedLog);
+    };
+
+    const removeFoodFromMeal = (mealType: MealType, foodId: string, grams: number) => {
+        const updatedLog = { ...dailyLog };
+        const foods = updatedLog.meals[mealType].foods;
+        const indexToRemove = foods.findIndex(f => f.id === foodId && f.grams === grams);
+        if (indexToRemove > -1) {
+            foods.splice(indexToRemove, 1);
+        }
+        updateLogs(updatedLog);
+    };
     
-    const updatedUser = { ...currentUser, password: newPassword };
-    setCurrentUser(updatedUser);
+    const addCustomFood = (food: Omit<Food, 'id' | 'isCustom'>) => {
+        const newFood: Food = { ...food, id: `custom-${Date.now()}`, isCustom: true };
+        setFoodList(prev => [newFood, ...prev]);
+    }
+
+    const updateWaterIntake = (amount: number) => {
+        const updatedLog = { ...dailyLog, water: amount };
+        updateLogs(updatedLog);
+    };
+
+    const changeDate = (direction: 'prev' | 'next' | 'today') => {
+        if (direction === 'today') {
+            setSelectedDate(getTodayDateString());
+            return;
+        }
+        const currentDate = new Date(selectedDate + 'T00:00:00');
+        if (direction === 'prev') {
+            currentDate.setDate(currentDate.getDate() - 1);
+        } else {
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        setSelectedDate(currentDate.toISOString().split('T')[0]);
+    };
     
-    const updatedUsers = users.map(u => u.id === currentUser.id ? updatedUser : u);
-    persistUsers(updatedUsers);
-    return true;
-  }
+    const addExercise = (exercise: Exercise, duration: number) => {
+        const newExercise: LoggedExercise = { ...exercise, duration };
+        const updatedLog = { ...dailyLog };
+        updatedLog.exercises.push(newExercise);
+        updateLogs(updatedLog);
+    }
 
-  const addCustomFood = (foodData: Omit<Food, 'id' | 'isCustom'>) => {
-    if (!currentUser) return;
-    const newFood: Food = { ...foodData, id: uuidv4(), isCustom: true };
-    const updatedFoodList = [...foodList, newFood];
-    setFoodList(updatedFoodList);
+    const removeExercise = (exerciseId: string, duration: number) => {
+        const updatedLog = { ...dailyLog };
+        const exercises = updatedLog.exercises;
+        const indexToRemove = exercises.findIndex(ex => ex.id === exerciseId && ex.duration === duration);
+        if (indexToRemove > -1) {
+            exercises.splice(indexToRemove, 1);
+        }
+        updateLogs(updatedLog);
+    };
     
-    const customFoods = updatedFoodList.filter(f => f.isCustom);
-    localStorage.setItem(`customFoods-${currentUser.id}`, JSON.stringify(customFoods));
-  };
 
-  const addFoodToMeal = (mealType: MealType, food: Food, grams: number) => {
-    setDailyLog(prevLog => {
-      if (!prevLog) return null;
-      const newLog = JSON.parse(JSON.stringify(prevLog)) as DailyLog;
-      const mealFood: MealFood = { ...food, grams };
-      newLog.meals[mealType].foods.push(mealFood);
-      return newLog;
-    });
-  };
-  
-  const removeFoodFromMeal = (mealType: MealType, foodId: string, grams: number) => {
-      setDailyLog(prevLog => {
-          if (!prevLog) return null;
-          const newLog = JSON.parse(JSON.stringify(prevLog)) as DailyLog;
-          const meal = newLog.meals[mealType];
-          const foodIndex = meal.foods.findIndex(f => f.id === foodId && f.grams === grams);
-          if(foodIndex > -1){
-              meal.foods.splice(foodIndex, 1);
-          }
-          return newLog;
-      });
-  };
+    const value: IUserContext = {
+        isAuthenticated: !!currentUser,
+        currentUser,
+        foodList,
+        dailyLog,
+        selectedDate,
+        login,
+        signup,
+        logout,
+        saveUserProfile,
+        updatePassword,
+        isProfileComplete,
+        addFoodToMeal,
+        removeFoodFromMeal,
+        addCustomFood,
+        updateWaterIntake,
+        changeDate,
+        addExercise,
+        removeExercise,
+    };
 
-  const updateWaterIntake = (amount: number) => {
-    setDailyLog(prevLog => {
-      if (!prevLog) return null;
-      return { ...prevLog, water: amount };
-    });
-  };
-
-  const isProfileComplete = () => {
-    if (!currentUser?.profile) return false;
-    const { profile } = currentUser;
-    return !!(profile.name && profile.age > 0 && profile.height > 0 && profile.weight > 0);
-  };
-
-  const changeDate = (direction: 'next' | 'prev' | 'today') => {
-      if (direction === 'today') {
-          setSelectedDate(getTodayDateString());
-          return;
-      }
-      
-      const currentDate = new Date(selectedDate + 'T00:00:00Z');
-      if (direction === 'next') {
-          currentDate.setDate(currentDate.getDate() + 1);
-      } else {
-          currentDate.setDate(currentDate.getDate() - 1);
-      }
-      setSelectedDate(currentDate.toISOString().split('T')[0]);
-  };
-
-  const isAuthenticated = !!currentUser;
-  // Note: userProfile is now derived from currentUser for backward compatibility in components
-  const userProfile = currentUser?.profile || null; 
-
-  return (
-    <UserContext.Provider value={{ currentUser, isAuthenticated, dailyLog, foodList, selectedDate, changeDate, login, signup, logout, saveUserProfile, updatePassword, addFoodToMeal, removeFoodFromMeal, addCustomFood, updateWaterIntake, isProfileComplete }}>
-      {children}
-    </UserContext.Provider>
-  );
+    return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };

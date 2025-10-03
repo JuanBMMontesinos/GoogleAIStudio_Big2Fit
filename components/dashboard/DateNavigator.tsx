@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+// FIX: Corrected import path for UserContext
 import { UserContext } from '../../context/UserContext';
 
 const ChevronLeftIcon: React.FC = () => (

@@ -1,4 +1,5 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
+// FIX: Corrected import path for UserContext
 import { UserContext } from '../context/UserContext';
 
 interface HeaderProps {

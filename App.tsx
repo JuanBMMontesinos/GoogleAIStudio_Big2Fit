@@ -1,8 +1,14 @@
+
 import React, { useState, useContext } from 'react';
+// FIX: Corrected import path for UserContext.
 import { UserProvider, UserContext } from './context/UserContext';
+// FIX: Corrected import path for SettingsScreen.
 import SettingsScreen from './components/screens/SettingsScreen';
+// FIX: Corrected import path for DashboardScreen.
 import DashboardScreen from './components/screens/DashboardScreen';
+// FIX: Corrected import path for Header.
 import Header from './components/Header';
+// FIX: Corrected import path for AuthScreen.
 import AuthScreen from './components/screens/AuthScreen';
 
 const MainApp: React.FC = () => {

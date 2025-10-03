@@ -1,30 +1,31 @@
+
 export enum Gender {
-  MALE = 'male',
-  FEMALE = 'female',
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
 }
 
 export enum ActivityLevel {
-  LOW = 'low',
-  MODERATE = 'moderate',
-  HIGH = 'high',
-  VERY_HIGH = 'very_high',
-  HYPERACTIVE = 'hyperactive',
+  LOW = 'LOW', // Sedentário (pouco ou nenhum exercício)
+  MODERATE = 'MODERATE', // Exercício leve (1-3 dias/semana)
+  HIGH = 'HIGH', // Exercício moderado (3-5 dias/semana)
+  VERY_HIGH = 'VERY_HIGH', // Exercício pesado (6-7 dias/semana)
+  HYPERACTIVE = 'HYPERACTIVE', // Exercício muito pesado (trabalho físico + exercício)
 }
 
 export enum Goal {
-  LOSE_WEIGHT_FAST = 'lose_weight_fast',
-  LOSE_WEIGHT_SLOW = 'lose_weight_slow',
-  MAINTAIN_WEIGHT = 'maintain_weight',
-  GAIN_WEIGHT_SLOW = 'gain_weight_slow',
-  GAIN_WEIGHT_FAST = 'gain_weight_fast',
+  LOSE_WEIGHT_FAST = 'LOSE_WEIGHT_FAST',
+  LOSE_WEIGHT_SLOW = 'LOSE_WEIGHT_SLOW',
+  MAINTAIN_WEIGHT = 'MAINTAIN_WEIGHT',
+  GAIN_WEIGHT_SLOW = 'GAIN_WEIGHT_SLOW',
+  GAIN_WEIGHT_FAST = 'GAIN_WEIGHT_FAST',
 }
 
 export interface UserProfile {
   name: string;
-  height: number; // in cm
-  weight: number; // in kg
-  gender: Gender;
   age: number;
+  height: number;
+  weight: number;
+  gender: Gender;
   activityLevel: ActivityLevel;
   goal: Goal;
 }
@@ -32,7 +33,7 @@ export interface UserProfile {
 export interface User {
   id: string;
   email: string;
-  password: string; // In a real app, this would be a hash
+  passwordHash: string;
   profile: UserProfile;
 }
 
@@ -50,19 +51,25 @@ export interface MealFood extends Food {
   grams: number;
 }
 
-export enum MealType {
-  BREAKFAST = 'Café da Manhã',
-  LUNCH = 'Almoço',
-  DINNER = 'Jantar',
-  SNACKS = 'Lanches',
-}
+export type MealType = 'Café da Manhã' | 'Almoço' | 'Jantar' | 'Lanches';
 
 export interface Meal {
   foods: MealFood[];
 }
 
-export type DailyLog = {
+export interface Exercise {
+    id: string;
+    name: string;
+    caloriesBurned: number; // per minute
+}
+
+export interface LoggedExercise extends Exercise {
+    duration: number; // in minutes
+}
+
+export interface DailyLog {
   date: string; // YYYY-MM-DD
   meals: Record<MealType, Meal>;
   water: number; // in ml
-};
+  exercises: LoggedExercise[];
+}

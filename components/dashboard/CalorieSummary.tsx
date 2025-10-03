@@ -6,68 +6,65 @@ import FireIcon from '../icons/FireIcon';
 interface CalorieSummaryProps {
   consumed: number;
   target: number;
+  burned: number;
 }
 
-const CircularProgress: React.FC<{ percentage: number; color: string; children: React.ReactNode }> = ({ percentage, color, children }) => {
-    const sqSize = 160;
-    const strokeWidth = 14;
-    const radius = (sqSize - strokeWidth) / 2;
-    const viewBox = `0 0 ${sqSize} ${sqSize}`;
-    const dashArray = radius * Math.PI * 2;
-    const dashOffset = dashArray - (dashArray * Math.min(percentage, 100)) / 100;
+const CalorieSummary: React.FC<CalorieSummaryProps> = ({ consumed, target, burned }) => {
+  const netConsumed = consumed - burned;
+  const remaining = Math.max(0, target - netConsumed);
+  const percentage = target > 0 ? Math.min((netConsumed / target) * 100, 100) : 0;
 
-    return (
-        <div className="relative flex items-center justify-center" style={{width: sqSize, height: sqSize}}>
-            <svg width={sqSize} height={sqSize} viewBox={viewBox}>
-                <circle
-                    className="fill-transparent stroke-gray-700"
-                    cx={sqSize / 2}
-                    cy={sqSize / 2}
-                    r={radius}
-                    strokeWidth={`${strokeWidth}px`}
-                />
-                <circle
-                    className={`fill-transparent ${color}`}
-                    cx={sqSize / 2}
-                    cy={sqSize / 2}
-                    r={radius}
-                    strokeWidth={`${strokeWidth}px`}
-                    transform={`rotate(-90 ${sqSize/2} ${sqSize/2})`}
-                    style={{
-                        strokeDasharray: dashArray,
-                        strokeDashoffset: dashOffset,
-                        strokeLinecap: 'round',
-                        transition: 'stroke-dashoffset 0.5s ease-in-out',
-                    }}
-                />
-            </svg>
-            <div className="absolute text-center">
-                {children}
-            </div>
-        </div>
-    );
-};
-
-const CalorieSummary: React.FC<CalorieSummaryProps> = ({ consumed, target }) => {
-  const remaining = target - consumed;
-  const percentage = target > 0 ? (consumed / target) * 100 : 0;
+  const radius = 80;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <Card title="Calorias" className="flex flex-col items-center">
-        <CircularProgress percentage={percentage} color="stroke-teal-400">
-            <span className="text-3xl font-bold text-white">{consumed}</span>
-            <span className="text-sm text-gray-400">kcal</span>
-        </CircularProgress>
-        <div className="w-full flex justify-around mt-4 text-center">
-            <div>
-                <p className="text-xs text-gray-400 uppercase">Meta</p>
-                <p className="font-bold text-white">{target}</p>
-            </div>
-             <div>
-                <p className="text-xs text-gray-400 uppercase">Restante</p>
-                <p className={`font-bold ${remaining < 0 ? 'text-red-500' : 'text-white'}`}>{remaining}</p>
-            </div>
+    <Card className="flex flex-col items-center justify-center text-center h-full">
+      <div className="relative w-48 h-48 mb-4">
+        <svg className="w-full h-full" viewBox="0 0 200 200">
+          <circle
+            className="text-gray-700"
+            strokeWidth="12"
+            stroke="currentColor"
+            fill="transparent"
+            r={radius}
+            cx="100"
+            cy="100"
+          />
+          <circle
+            className="text-teal-400"
+            strokeWidth="12"
+            stroke="currentColor"
+            fill="transparent"
+            r={radius}
+            cx="100"
+            cy="100"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            style={{ transition: 'stroke-dashoffset 0.5s ease-in-out' }}
+            transform="rotate(-90 100 100)"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-3xl font-bold text-white">{Math.round(remaining)}</span>
+            <span className="text-sm text-gray-400">Restantes</span>
         </div>
+      </div>
+      <div className="grid grid-cols-3 gap-4 w-full text-center">
+        <div>
+          <p className="text-xs text-gray-400">Meta</p>
+          <p className="font-semibold text-white">{Math.round(target)}</p>
+        </div>
+        <div className="border-l border-r border-gray-700">
+          <p className="text-xs text-gray-400">Consumido</p>
+          <p className="font-semibold text-white">{Math.round(consumed)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-400">Exercício</p>
+          <p className="font-semibold text-white">{Math.round(burned)}</p>
+        </div>
+      </div>
     </Card>
   );
 };

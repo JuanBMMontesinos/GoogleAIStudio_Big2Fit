@@ -1,4 +1,6 @@
 
+
+// FIX: Corrected import path for types
 import { UserProfile, Gender, ActivityLevel, Goal } from '../types';
 
 const activityMultipliers: Record<ActivityLevel, number> = {

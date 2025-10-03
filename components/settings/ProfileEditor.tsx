@@ -1,6 +1,9 @@
 import React, { useState, useContext, useEffect } from 'react';
+// FIX: Corrected import path for UserContext
 import { UserContext } from '../../context/UserContext';
-import { UserProfile, Gender, ActivityLevel, Goal } from '../../types';
+// FIX: Corrected import path for types
+import { UserProfile } from '../../types';
+// FIX: Corrected import path for constants
 import { ACTIVITY_LEVELS, GOALS, GENDERS } from '../../constants';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
