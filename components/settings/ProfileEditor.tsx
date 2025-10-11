@@ -1,3 +1,4 @@
+
 import React, { useState, useContext, useEffect } from 'react';
 // FIX: Corrected import path for UserContext
 import { UserContext } from '../../context/UserContext';
@@ -10,10 +11,13 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Card from '../ui/Card';
 
-const ProfileEditor: React.FC = () => {
+interface ProfileEditorProps {
+    setActiveScreen: (screen: 'dashboard' | 'settings') => void;
+}
+
+const ProfileEditor: React.FC<ProfileEditorProps> = ({ setActiveScreen }) => {
   const { currentUser, saveUserProfile, isProfileComplete } = useContext(UserContext);
   const [profileData, setProfileData] = useState<UserProfile | null>(currentUser?.profile || null);
-  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     if (currentUser?.profile) {
@@ -31,8 +35,7 @@ const ProfileEditor: React.FC = () => {
     e.preventDefault();
     if (profileData) {
       saveUserProfile(profileData);
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
+      setActiveScreen('dashboard');
     }
   };
 
@@ -76,7 +79,6 @@ const ProfileEditor: React.FC = () => {
         </Select>
 
         <div className="flex items-center justify-end space-x-4">
-           {isSaved && <span className="text-green-400">Perfil salvo com sucesso!</span>}
           <Button type="submit">Salvar Perfil</Button>
         </div>
       </form>

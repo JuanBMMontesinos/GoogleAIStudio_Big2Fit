@@ -27,7 +27,7 @@ const MainApp: React.FC = () => {
     <div className="min-h-screen bg-gray-900 text-gray-100 font-sans">
       <Header activeScreen={activeScreen} setActiveScreen={setActiveScreen} />
       <main className="p-4 sm:p-6 md:p-8">
-        {activeScreen === 'dashboard' ? <DashboardScreen /> : <SettingsScreen />}
+        {activeScreen === 'dashboard' ? <DashboardScreen /> : <SettingsScreen setActiveScreen={setActiveScreen} />}
       </main>
     </div>
   );

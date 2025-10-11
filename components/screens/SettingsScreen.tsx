@@ -1,9 +1,14 @@
+
 import React, { useState } from 'react';
 import Card from '../ui/Card';
 import ProfileEditor from '../settings/ProfileEditor';
 import ChangePassword from '../settings/ChangePassword';
 
-const SettingsScreen: React.FC = () => {
+interface SettingsScreenProps {
+    setActiveScreen: (screen: 'dashboard' | 'settings') => void;
+}
+
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ setActiveScreen }) => {
     const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
 
     return (
@@ -24,7 +29,7 @@ const SettingsScreen: React.FC = () => {
                 </button>
             </div>
 
-            {activeTab === 'profile' && <ProfileEditor />}
+            {activeTab === 'profile' && <ProfileEditor setActiveScreen={setActiveScreen} />}
             {activeTab === 'password' && <ChangePassword />}
         </div>
     );
